@@ -1,21 +1,17 @@
 // lib/view_models/calendar_view_model.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/holiday.dart'; // Model 임포트 필수!
+import '../models/holiday.dart';
 
-// 1. 기준일 (어제가 근무일!)
 final workBaseDateProvider = Provider<DateTime>((ref) => DateTime(2026, 1, 24));
 
-// 2. 배달부 (Provider)
 final holidayProvider = Provider((ref) {
-  final baseDate = ref.watch(workBaseDateProvider); // 24일
+  // 1. 기준일 데이터를 가져옵니다.
+  final baseDate = ref.watch(workBaseDateProvider);
 
-  return (DateTime day) {
-    final cleanDay = DateTime(day.year, day.month, day.day);
-    final cleanBase = DateTime(baseDate.year, baseDate.month, baseDate.day);
-    final diff = cleanDay.difference(cleanBase).inDays;
+  // 2. ⭐ Model 객체를 생성합니다. (여기서 연결이 일어납니다!)
+  final model = WorkStatus(baseDate: baseDate);
 
-    // 변경 전: diff % 2 != 0 (홀수 - 25일이 빨간색)
-    // 변경 후: diff % 2 == 0 (짝수 - 24일, 26일...이 빨간색)
-    return diff % 2 == 0;
-  };
+  // 3. ⭐ Model이 가진 'isHoliday' 함수 자체를 반환합니다.
+  // 이제 View에서 이 함수를 호출하면 Model의 로직이 실행됩니다.
+  return model.isHoliday;
 });
