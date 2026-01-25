@@ -29,13 +29,18 @@ jobs:
         run: flutter pub get
 
       - name: Build APK
-        # 테스트용이므로 디버그 빌드로 빠르게 진행
-        run: flutter build apk --debug --split-per-abi
+        # release 모드로 빌드하되 기기별로 쪼갬
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rename and Prepare APK
+        run: |
+          mkdir -p final_apk
+          # arm64-v8a 파일만 골라서 이름을 깔끔하게 변경
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk final_apk/app-arm64-v8a-release.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: flutter-apk-test
-          path: build/app/outputs/flutter-apk/*.apk
-          # ⭐ 빌드된 파일을 깃허브 서버에 딱 1일만 보관합니다.
-          retention-days: 1
+          path: final_apk/app-arm64-v8a-release.apk
+          retention-days: 1  # 1일만 보관
