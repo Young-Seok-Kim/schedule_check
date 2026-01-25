@@ -13,6 +13,11 @@ class ScheduleView extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('격일 근무 달력')),
       body: TableCalendar(
+        // 혹은 버튼 자체를 아예 안 보이게 하고 싶다면?
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false, // 💡 이 줄을 추가하면 버튼이 아예 삭제됩니다.
+          titleCentered: true,        // 월 이름(예: 2026년 1월)을 가운데로 정렬
+        ),
         locale: 'ko_KR',
         firstDay: DateTime.utc(2020, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),

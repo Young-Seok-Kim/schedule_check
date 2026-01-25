@@ -1,0 +1,41 @@
+name: Build Flutter APK (Test)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    if: contains(github.event.head_commit.message, 'create apk test')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        # 테스트용이므로 디버그 빌드로 빠르게 진행
+        run: flutter build apk --debug --split-per-abi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-apk-test
+          path: build/app/outputs/flutter-apk/*.apk
+          # ⭐ 빌드된 파일을 깃허브 서버에 딱 1일만 보관합니다.
+          retention-days: 1

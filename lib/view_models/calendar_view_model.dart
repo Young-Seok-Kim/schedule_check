@@ -2,7 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/holiday.dart';
 
-final workBaseDateProvider = Provider<DateTime>((ref) => DateTime(2026, 1, 24));
+final workBaseDateProvider = Provider<DateTime>((_) => DateTime(2026, 1, 24));
 
 final holidayProvider = Provider((ref) {
   // 1. 기준일 데이터를 가져옵니다.
