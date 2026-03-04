@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod 필수 임포트
-import 'views/schedule_view.dart'; // 우리가 만든 달력 화면
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // 💡 이 줄이 꼭 있어야 합니다!
-void main() {
-  runApp(
-    // 1. Riverpod을 사용하려면 앱 전체를 반드시 ProviderScope로 감싸야 합니다.
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod 필수 임포트
+import 'package:hive_flutter/hive_flutter.dart';
+
+import 'views/schedule_view.dart'; // 우리가 만든 달력 화면
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter(); // ⭐ Hive 초기화 필수!
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {

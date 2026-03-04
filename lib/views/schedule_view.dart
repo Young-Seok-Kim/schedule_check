@@ -1,47 +1,110 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../view_models/calendar_view_model.dart';
 
-class ScheduleView extends ConsumerWidget {
+// 뷰모델과 모델을 가져옵니다.
+import '../view_models/calendar_view_model.dart';
+import '../models/holiday.dart';
+import '../models/schedule.dart';
+
+class ScheduleView extends ConsumerStatefulWidget {
   const ScheduleView({super.key});
+  @override
+  ConsumerState<ScheduleView> createState() => _ScheduleViewState();
+}
+
+class _ScheduleViewState extends ConsumerState<ScheduleView> {
+  DateTime _selectedDay = DateTime.now();
+
+  // 입력창 다이얼로그
+  void _showAddDialog() {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('스케줄 추가'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: titleController, decoration: const InputDecoration(hintText: '제목')),
+            TextField(controller: contentController, decoration: const InputDecoration(hintText: '내용')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () {
+              ref.read(scheduleProvider.notifier).addSchedule(
+                  _selectedDay,
+                  titleController.text,
+                  contentController.text
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isHoliday = ref.watch(holidayProvider);
+    final scheduleState = ref.watch(scheduleProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('격일 근무 달력')),
-      body: TableCalendar(
-        // 혹은 버튼 자체를 아예 안 보이게 하고 싶다면?
-        headerStyle: const HeaderStyle(
-          formatButtonVisible: false, // 💡 이 줄을 추가하면 버튼이 아예 삭제됩니다.
-          titleCentered: true,        // 월 이름(예: 2026년 1월)을 가운데로 정렬
-        ),
-        locale: 'ko_KR',
-        firstDay: DateTime.utc(2020, 1, 1),
-        lastDay: DateTime.utc(2030, 12, 31),
-        focusedDay: DateTime.now(),
-        // 날짜별로 특별한 스타일을 입힐 때 사용
-        calendarBuilders: CalendarBuilders(
-          defaultBuilder: (context, day, focusedDay) {
-            if (isHoliday(day)) {
-              return Container(
-                margin: const EdgeInsets.all(4.0),
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent, // 쉬는 날 빨간색
-                  shape: BoxShape.circle,
+      body: scheduleState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('에러: $err')),
+        data: (allSchedules) {
+          final cleanDate = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+          final selectedSchedules = allSchedules[cleanDate] ?? [];
+
+          return Column(
+            children: [
+              TableCalendar(
+                locale: 'ko_KR',
+                focusedDay: _selectedDay,
+                firstDay: DateTime(2020),
+                lastDay: DateTime(2030),
+                headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (selectedDay, focusedDay) => setState(() => _selectedDay = selectedDay),
+                calendarBuilders: CalendarBuilders(
+                  defaultBuilder: (context, day, focusedDay) {
+                    if (isHoliday(day)) return Center(child: Text('${day.day}', style: const TextStyle(color: Colors.red)));
+                    return null;
+                  },
+                  markerBuilder: (context, day, events) {
+                    final d = DateTime(day.year, day.month, day.day);
+                    if (allSchedules.containsKey(d)) {
+                      return Positioned(bottom: 1, child: Container(width: 5, height: 5, decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle)));
+                    }
+                    return null;
+                  },
                 ),
-                child: Text(
-                  '${day.day}',
-                  style: const TextStyle(color: Colors.white),
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: selectedSchedules.length,
+                  itemBuilder: (context, index) => ListTile(
+                    title: Text(selectedSchedules[index].title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(selectedSchedules[index].content),
+                  ),
                 ),
-              );
-            }
-            return null; // 근무일은 기본 스타일
-          },
-        ),
+              ),
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddDialog,
+        child: const Icon(Icons.add),
       ),
     );
   }
