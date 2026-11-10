@@ -1,13 +1,14 @@
 name: Build Flutter APK (Test)
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 
 jobs:
   build:
-    if: contains(github.event.head_commit.message, 'create apk test')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'create apk test')
     runs-on: ubuntu-latest
 
     steps:
@@ -43,4 +44,4 @@ jobs:
         with:
           name: flutter-apk-test
           path: final_apk/app-arm64-v8a-release.apk
-          retention-days: 1  # 1일만 보관
+          retention-days: 7
